@@ -1,0 +1,150 @@
+--exec litsar_tabla_ventas 0,0
+alter procedure litsar_tabla_ventas
+@id_cliente int,
+@id_producto int
+
+as
+
+select c.nombre_cliente,p.nombre_producto,s.total
+from sales s
+inner join client c on c.id_cliente = s.id_cliente
+inner join product p on p.id_producto = s.id_producto
+where (s.id_cliente = @id_cliente or @id_cliente = 0)
+and (s.id_producto = @id_producto or @id_producto = 0)
+
+
+--exec litsar_tabla_ventas 1,1
+create procedure litsar_tabla_ventas
+@id_cliente int,
+@id_producto int
+
+as
+
+select c.nombre_cliente,p.nombre_producto,s.total
+from sales s
+inner join client c on c.id_cliente = s.id_cliente
+inner join product p on p.id_producto = s.id_producto
+where s.id_cliente = @id_cliente
+and s.id_producto = @id_producto
+
+----------------------------------------
+conexion
+{
+    class funciones
+    {
+        public void llenarcombou(DropDownList drp1)
+        {
+            try
+            {
+                SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=QMGPS_TEST;Integrated Security=True");
+                SqlCommand cmd = new SqlCommand("select nombre_cliente,id_cliente from client", con);
+                SqlDataAdapter sda = new SqlDataAdapter(cmd);
+                DataSet ds = new DataSet();
+                sda.Fill(ds);
+                drp1.DataSource = ds;
+                drp1.DataTextField = "nombre_cliente";                         
+                drp1.DataValueField = "id_cliente";
+                drp1.DataBind();
+
+                drp1.Items.Insert(0, new ListItem("Todos", "0"));
+            }
+            catch
+            {
+
+            }
+        }
+
+        public void llenarcombod(DropDownList drp2)
+        {
+            try
+            {
+                SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=QMGPS_TEST;Integrated Security=True");
+                SqlCommand cmd = new SqlCommand("select nombre_producto,id_producto from product", con);
+                SqlDataAdapter sda = new SqlDataAdapter(cmd);
+                DataSet ds = new DataSet();
+                sda.Fill(ds);
+                drp2.DataSource = ds;
+                drp2.DataTextField = "nombre_producto";
+                drp2.DataValueField = "id_producto";
+                drp2.DataBind();
+
+                drp2.Items.Insert(0, new ListItem("Todos", "0"));
+            }
+
+            catch
+            {
+
+            }
+
+        }
+
+        public void llenagrilla(GridView gv, DropDownList  c, DropDownList p)
+        {
+            String sql;
+            SqlConnection cn;
+            SqlCommand cm;
+            SqlDataAdapter da;
+            DataSet ds;
+            sql = "exec litsar_tabla_ventas " + Convert.ToString(c.SelectedValue ) + "," + Convert.ToString(p.SelectedValue ) + "";
+            cn = new SqlConnection("Data Source=.;Initial Catalog=QMGPS_TEST;Integrated Security=True"); ;
+            cn.Open();
+
+            cm = new SqlCommand();
+            cm.CommandText = sql;
+            cm.CommandType = CommandType.Text;
+            cm.Connection = cn;
+            da = new SqlDataAdapter(cm);
+
+            ds = new DataSet();
+            da.Fill(ds);
+
+            gv.DataSource = ds.Tables[0];
+            gv.DataBind();
+            cn.Close();
+        }
+        
+    }
+}
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+ protected void Page_Load(object sender, EventArgs e)
+        {
+            funciones con = new funciones();
+            con.llenarcombou(Cbo01);
+
+            con.llenarcombod(Cbo02);
+
+
+            con.llenagrilla(GridView1,Cbo01 , Cbo02);
+
+            int suma = 0;
+            if (GridView1.Rows.Count > 0)
+            {
+                foreach (GridViewRow row in GridView1.Rows)
+                {
+                    suma = suma + Convert.ToInt32(row.Cells[2].Text);
+                }
+
+                TextBox1.Text = Convert.ToString (suma);
+            }
+        }
+
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            funciones con = new funciones();
+            con.llenagrilla(GridView1, Cbo01, Cbo02);
+
+            int suma = 0;
+            if (GridView1.Rows.Count > 0)
+            {
+                foreach (GridViewRow row in GridView1.Rows)
+                {
+                    suma = suma + Convert.ToInt32(row.Cells[2].Text);
+                }
+
+                TextBox1.Text = Convert.ToString(suma);
+            }
+        }
